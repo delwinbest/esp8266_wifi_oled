@@ -1,8 +1,8 @@
 /** Handle root or redirect to captive portal */
 void handleRoot() {
-  if (captivePortal()) { // If caprive portal redirect instead of displaying the page.
-    return;
-  }
+  //if (captivePortal()) { // If caprive portal redirect instead of displaying the page.
+  //  return;
+  //}
   server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   server.sendHeader("Pragma", "no-cache");
   server.sendHeader("Expires", "-1");
@@ -27,7 +27,10 @@ void handleRoot() {
 /** Redirect to captive portal if we got a request for another domain. Return true in that case so the page handler do not try to handle the request again. */
 boolean captivePortal() {
   if (!isIp(server.hostHeader()) && server.hostHeader() != (String(myHostname) + ".local")) {
-    Serial.println("Request redirected to captive portal");
+    display.println("Request redirected to captive portal");
+    display.clear();
+    display.drawLogBuffer(0, 0);
+    display.display();
     server.sendHeader("Location", String("http://") + toStringIp(server.client().localIP()), true);
     server.send(302, "text/plain", "");   // Empty content inhibits Content-length header so we have to close the socket ourselves.
     server.client().stop(); // Stop is needed because we sent no content length
@@ -70,9 +73,16 @@ void handleWifi() {
     "\r\n<br />"
     "<table><tr><th align='left'>WLAN list (refresh if any missing)</th></tr>"
   );
-  Serial.println("scan start");
-  int n = WiFi.scanNetworks();
-  Serial.println("scan done");
+  display.println("scan start");
+  display.clear();
+  display.drawLogBuffer(0, 0);
+  display.display();
+  //int n = WiFi.scanNetworks();
+  int n = 5;
+  display.println("scan done");
+  display.clear();
+  display.drawLogBuffer(0, 0);
+  display.display();
   if (n > 0) {
     for (int i = 0; i < n; i++) {
       server.sendContent(String() + "\r\n<tr><td>SSID " + WiFi.SSID(i) + String((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : " *") + " (" + WiFi.RSSI(i) + ")</td></tr>");
@@ -94,7 +104,10 @@ void handleWifi() {
 
 /** Handle the WLAN save form and redirect to WLAN config page again */
 void handleWifiSave() {
-  Serial.println("wifi save");
+  display.println("wifi save");
+  display.clear();
+  display.drawLogBuffer(0, 0);
+  display.display();
   server.arg("n").toCharArray(ssid, sizeof(ssid) - 1);
   server.arg("p").toCharArray(password, sizeof(password) - 1);
   server.sendHeader("Location", "wifi", true);
@@ -108,9 +121,9 @@ void handleWifiSave() {
 }
 
 void handleNotFound() {
-  if (captivePortal()) { // If caprive portal redirect instead of displaying the error page.
-    return;
-  }
+  //if (captivePortal()) { // If caprive portal redirect instead of displaying the error page.
+  //  return;
+  //}
   String message = "File Not Found\n\n";
   message += "URI: ";
   message += server.uri();

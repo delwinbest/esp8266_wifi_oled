@@ -2,7 +2,7 @@
 //#define SERIALDEBUG
 
 // Hostname
-const char *myHostname = "ESP_OLED";
+const char *myHostname = "esp";
 
 /* Don't set this wifi credentials. They are configurated at runtime and stored on EEPROM */
 char ssid[32] = "";

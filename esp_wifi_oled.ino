@@ -64,7 +64,7 @@ void setup() {
   display.setContrast(255);
   // Initialize the log buffer
   // allocate memory to store 8 lines of text and 30 chars per line.
-  display.setLogBuffer(8, 30);
+  display.setLogBuffer(5, 30);
   display.setFont(ArialMT_Plain_10);
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.clear();
@@ -74,6 +74,7 @@ void setup() {
   // Draw it to the internal screen buffer
   display.println("Vcc: " + getVoltage());
   display.println("Configuring access point...");
+  display.clear();
   display.drawLogBuffer(0, 0);
   display.display();
   digitalWrite(pin_LED, !digitalRead(pin_LED));   // toggle LED
@@ -95,7 +96,8 @@ void setup() {
     delay(50);
   }*/
   
-    /* Setup web pages: root, wifi config pages, SO captive portal detectors and not found. */
+  WiFi.scanNetworks();
+  /* Setup web pages: root, wifi config pages, SO captive portal detectors and not found. */
   server.on("/", handleRoot);
   server.on("/wifi", handleWifi);
   server.on("/wifisave", handleWifiSave);
@@ -108,11 +110,13 @@ void setup() {
   display.println(timeClient.getFormattedTime());
   timeClient.begin();
   timeClient.update();
+  display.clear();
   display.drawLogBuffer(0, 0);
   display.display();
   display.println("HTTP server started");
   loadCredentials(); // Load WLAN credentials from network
   connect = strlen(ssid) > 0; // Request WLAN connect if there is a SSID
+  display.clear();
   display.drawLogBuffer(0, 0);
   display.display();
   digitalWrite(pin_LED, HIGH);   // toggle LED
@@ -154,12 +158,18 @@ String getVoltage() {
 }
 
 void connectWifi() {
-  Serial.println("Connecting as wifi client...");
+  display.println("Connecting as wifi client...");
   WiFi.disconnect();
   WiFi.begin ( ssid, password );
+  display.clear();
+  display.drawLogBuffer(0, 0);
+  display.display();
   int connRes = WiFi.waitForConnectResult();
-  Serial.print ( "connRes: " );
-  Serial.println ( connRes );
+  display.print ( "connRes: " );
+  display.println ( connRes );
+  display.clear();
+  display.drawLogBuffer(0, 0);
+  display.display();
 }
 
 void loop() {
@@ -169,13 +179,14 @@ void loop() {
   #endif
  // display.clear();
  // staticMenu();
-  delay(500);
+  //delay(500);
   //display.clear();
   //display.drawString(0, 50, timeClient.getFormattedTime());
   //display.display();
 
   if (connect) {
     display.println ( "Connect requested" );
+    display.clear();
     display.drawLogBuffer(0, 0);
     display.display();
     connect = false;
@@ -184,7 +195,7 @@ void loop() {
   }
   {
     int s = WiFi.status();
-    if (s == 0 && millis() > (lastConnectTry + 60000) ) {
+    if (s == 0 && millis() > (lastConnectTry + 360000) ) {
       /* If WLAN disconnected and idle try to connect */
       /* Don't set retry time too low as retry interfere the softAP operation */
       connect = true;
@@ -192,6 +203,7 @@ void loop() {
     if (status != s) { // WLAN status change
       display.print ( "Status: " );
       display.println ( s );
+      display.clear();
       display.drawLogBuffer(0, 0);
       display.display();
       status = s;
@@ -202,15 +214,18 @@ void loop() {
         display.println ( ssid );
         display.print ( "IP address: " );
         display.println ( WiFi.localIP() );
+        display.clear();
         display.drawLogBuffer(0, 0);
         display.display();
         // Setup MDNS responder
         if (!MDNS.begin(myHostname)) {
           display.println("Error setting up MDNS responder!");
+          display.clear();
           display.drawLogBuffer(0, 0);
           display.display();
         } else {
           display.println("mDNS responder started");
+          display.clear();
           display.drawLogBuffer(0, 0);
           display.display();          
           // Add service to MDNS-SD

@@ -10,9 +10,12 @@ void loadCredentials() {
     ssid[0] = 0;
     password[0] = 0;
   }
-  Serial.println("Recovered credentials:");
-  Serial.println(ssid);
-  Serial.println(strlen(password) > 0 ? "********" : "<no password>");
+  display.println("Recovered credentials:");
+  display.println(ssid);
+  display.println(strlen(password) > 0 ? "********" : "<no password>");
+  display.clear();
+  display.drawLogBuffer(0, 0);
+  display.display();
 }
 
 /** Store WLAN credentials to EEPROM */
