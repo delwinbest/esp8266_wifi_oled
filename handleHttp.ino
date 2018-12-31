@@ -1,8 +1,8 @@
 /** Handle root or redirect to captive portal */
 void handleRoot() {
-  //if (captivePortal()) { // If caprive portal redirect instead of displaying the page.
-  //  return;
-  //}
+  if (captivePortal()) { // If caprive portal redirect instead of displaying the page.
+    return;
+  }
   server.sendHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   server.sendHeader("Pragma", "no-cache");
   server.sendHeader("Expires", "-1");
@@ -21,6 +21,7 @@ void handleRoot() {
     "<p>You may want to <a href='/wifi'>config the wifi connection</a>.</p>"
     "</body></html>"
   );
+  server.sendContent("");
   server.client().stop(); // Stop is needed because we sent no content length
 }
 
@@ -77,8 +78,7 @@ void handleWifi() {
   display.clear();
   display.drawLogBuffer(0, 0);
   display.display();
-  //int n = WiFi.scanNetworks();
-  int n = 5;
+  int n = WiFi.scanNetworks();
   display.println("scan done");
   display.clear();
   display.drawLogBuffer(0, 0);
@@ -99,6 +99,7 @@ void handleWifi() {
     "<p>You may want to <a href='/'>return to the home page</a>.</p>"
     "</body></html>"
   );
+  server.sendContent("");
   server.client().stop(); // Stop is needed because we sent no content length
 }
 
