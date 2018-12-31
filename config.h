@@ -2,11 +2,19 @@
 //#define SERIALDEBUG
 
 // Hostname
-const char* HOSTNAME = "ESP_OLED";
+const char *myHostname = "ESP_OLED";
 
-// wifi settings
-const char* ssid     = "SSID";
-const char* password = "password";
+/* Don't set this wifi credentials. They are configurated at runtime and stored on EEPROM */
+char ssid[32] = "";
+char password[32] = "";
+
+/* Set these to your desired softAP credentials. They are not configurable at runtime */
+const char *softAP_ssid = "ESP_ap";
+const char *softAP_password = "12345678";
+
+
+// DNS server
+const byte DNS_PORT = 53;
 
 // ESP Wifi oled Board Pin Defnitions
 const byte  pin_UP = 12;
