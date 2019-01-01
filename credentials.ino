@@ -10,9 +10,13 @@ void loadCredentials() {
     ssid[0] = 0;
     password[0] = 0;
   }
-  display.println("Recovered credentials:");
-  display.println(ssid);
-  display.println(strlen(password) > 0 ? "********" : "<no password>");
+  if (strlen(ssid) > 0) {
+    display.println("Recovered creds:");
+    display.print(ssid);
+    display.println(strlen(password) > 0 ? " ********" : " <no password>");
+  } else {
+    display.println("No Credentials Found!");
+  }
   display.clear();
   display.drawLogBuffer(0, 0);
   display.display();

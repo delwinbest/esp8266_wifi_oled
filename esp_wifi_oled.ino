@@ -52,6 +52,7 @@ int status = WL_IDLE_STATUS;
 
 
 void setup() {
+  Serial.begin(115200);
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(pin_LED, OUTPUT);
   digitalWrite(pin_LED, !digitalRead(pin_LED));   // toggle LED
@@ -75,7 +76,9 @@ void setup() {
   digitalWrite(pin_LED, !digitalRead(pin_LED));   // toggle LED
   // Draw it to the internal screen buffer
   display.println("Vcc: " + getVoltage());
-
+  display.clear();
+  display.drawLogBuffer(0, 0);
+  display.display();
   //display.print("TimeSync: ");
   //display.println(timeClient.getFormattedTime());
   //timeClient.begin();
@@ -85,12 +88,93 @@ void setup() {
   //display.display();
   loadCredentials(); // Load WLAN credentials from network
   connect = strlen(ssid) > 0; // Request WLAN connect if there is a SSID
-  display.clear();
-  display.drawLogBuffer(0, 0);
-  display.display();
   digitalWrite(pin_LED, HIGH);   // toggle LED
+  WiFi.persistent(false);
+  //WiFi.mode(WIFI_AP_STA);
+  setupCore();
+}
 
-  delay(2000);
+void loop() {
+
+  // display.clear();
+  // staticMenu();
+  //delay(500);
+  //display.clear();
+  //display.drawString(0, 50, timeClient.getFormattedTime());
+  //display.display();
+
+  if (connect) {
+    display.println ( "Connect requested" );
+    display.clear();
+    display.drawLogBuffer(0, 0);
+    display.display();
+    connect = false;
+    connectWifi();
+    startHTTP();
+    lastConnectTry = millis();
+  }
+  {
+    int s = WiFi.status();
+    if (s == WL_IDLE_STATUS && millis() > (lastConnectTry + 360000) ) {
+      /* If WLAN disconnected and idle try to connect */
+      /* Don't set retry time too low as retry interfere the softAP operation */
+      connect = true;
+    }
+    if (status != s) { // WLAN status change
+      //display.print ( "Status: " );
+      //display.println ( s );
+      //display.clear();
+      //display.drawLogBuffer(0, 0);
+      //display.display();
+      status = s;
+      if (s == WL_CONNECTED) {
+        /* Just connected to WLAN */
+        //display.println ( "" );
+        display.print ( "Connected to " );
+        display.println ( ssid );
+        display.print ( "IP address:" );
+        display.println ( WiFi.localIP() );
+        display.clear();
+        display.drawLogBuffer(0, 0);
+        display.display();
+        setupCore();
+        // Setup MDNS responder
+      } else if (s == WL_NO_SSID_AVAIL) {
+        //WiFi.softAPdisconnect();
+        WiFi.disconnect();
+        setupCore();
+      }
+    }
+  }
+  // Do work:
+  //DNS
+  dnsServer.processNextRequest();
+  //HTTP
+  server.handleClient();
+  //#ifdef OTA
+  ArduinoOTA.handle();
+  //#endif
+  
+}
+
+
+void setupCore(){
+  setupAP();
+  startHTTP();
+  configureOTA();
+  if (!MDNS.begin(myHostname)) {
+    display.println("Error setting up MDNS responder!");
+    display.clear();
+    display.drawLogBuffer(0, 0);
+    display.display();
+  } else {
+    //display.println("mDNS responder started");
+    //display.clear();
+    //display.drawLogBuffer(0, 0);
+    //display.display();          
+    // Add service to MDNS-SD
+    MDNS.addService("http", "tcp", 80);
+  }
 }
 
 String getVoltage() {
@@ -105,7 +189,6 @@ String getVoltage() {
 void connectWifi() {
   display.println("Connecting as wifi client...");
   WiFi.disconnect();
-  WiFi.mode(WIFI_AP_STA);
   delay(100);
   WiFi.begin ( ssid, password );
   display.clear();
@@ -120,18 +203,23 @@ void connectWifi() {
 }
 
 void setupAP() {
-  display.println("Configuring access point...");
+  display.println("Configuring access point");
   display.clear();
   display.drawLogBuffer(0, 0);
   display.display();
   digitalWrite(pin_LED, LOW);   // toggle LED
 
   /* You can remove the password parameter if you want the AP to be open. */
+  //WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(apIP, apIP, netMsk);
   WiFi.softAP(softAP_ssid, softAP_password);
-  delay(500); // Without delay I've seen the IP address blank
+  delay(1000); // Without delay I've seen the IP address blank
   display.print("AP IP address:");
+  display.clear();
+  display.drawLogBuffer(0, 0);
+  display.display();
   display.println(WiFi.softAPIP());
+  display.clear();
   display.drawLogBuffer(0, 0);
   display.display();
   /* Setup the DNS server redirecting all the domains to the apIP */  
@@ -162,89 +250,6 @@ void startHTTP() {
   server.onNotFound ( handleNotFound );
   server.begin(); // Web server start
   display.println("HTTP server started");
-}
-
-void loop() {
-
-  //#ifdef OTA
-  ArduinoOTA.handle();
-  //#endif
- // display.clear();
- // staticMenu();
-  //delay(500);
-  //display.clear();
-  //display.drawString(0, 50, timeClient.getFormattedTime());
-  //display.display();
-
-  if (connect) {
-    display.println ( "Connect requested" );
-    display.clear();
-    display.drawLogBuffer(0, 0);
-    display.display();
-    connect = false;
-    connectWifi();
-    startHTTP();
-    lastConnectTry = millis();
-  }
-  {
-    int s = WiFi.status();
-    if (s == WL_IDLE_STATUS && millis() > (lastConnectTry + 360000) ) {
-      /* If WLAN disconnected and idle try to connect */
-      /* Don't set retry time too low as retry interfere the softAP operation */
-      connect = true;
-    }
-    if (status != s) { // WLAN status change
-      display.print ( "Status: " );
-      display.println ( s );
-      display.clear();
-      display.drawLogBuffer(0, 0);
-      display.display();
-      status = s;
-      if (s == WL_CONNECTED) {
-        /* Just connected to WLAN */
-        //display.println ( "" );
-        display.print ( "Connected to " );
-        display.println ( ssid );
-        display.print ( "IP address:" );
-        display.println ( WiFi.localIP() );
-        display.clear();
-        display.drawLogBuffer(0, 0);
-        display.display();
-        WiFi.mode(WIFI_AP_STA);
-        delay(100);
-        setupAP();
-        startHTTP();
-        configureOTA();
-        // Setup MDNS responder
-        if (!MDNS.begin(myHostname)) {
-          display.println("Error setting up MDNS responder!");
-          display.clear();
-          display.drawLogBuffer(0, 0);
-          display.display();
-        } else {
-          display.println("mDNS responder started");
-          display.clear();
-          display.drawLogBuffer(0, 0);
-          display.display();          
-          // Add service to MDNS-SD
-          MDNS.addService("http", "tcp", 80);
-        }
-      } else if (s == WL_NO_SSID_AVAIL) {
-        WiFi.softAPdisconnect();
-        WiFi.disconnect();
-        WiFi.mode(WIFI_AP);
-        delay(100);
-        setupAP();
-        startHTTP();
-      }
-    }
-  }
-  // Do work:
-  //DNS
-  dnsServer.processNextRequest();
-  //HTTP
-  server.handleClient();
-  
 }
 
 void configureOTA(){
@@ -282,6 +287,9 @@ void configureOTA(){
     display.setTextAlignment(TEXT_ALIGN_CENTER_BOTH);
     display.drawString(display.getWidth()/2, display.getHeight()/2, "Restart");
     display.display();
+    WiFi.disconnect();
+    //ESP.eraseConfig;
+    ESP.reset();
   });
   display.println("OTA Started");
   display.clear();
