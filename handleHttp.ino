@@ -74,15 +74,7 @@ void handleWifi() {
     "\r\n<br />"
     "<table><tr><th align='left'>WLAN list (refresh if any missing)</th></tr>"
   );
-  display.println("scan start");
-  display.clear();
-  display.drawLogBuffer(0, 0);
-  display.display();
   int n = WiFi.scanNetworks();
-  display.println("scan done");
-  display.clear();
-  display.drawLogBuffer(0, 0);
-  display.display();
   if (n > 0) {
     for (int i = 0; i < n; i++) {
       server.sendContent(String() + "\r\n<tr><td>SSID " + WiFi.SSID(i) + String((WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : " *") + " (" + WiFi.RSSI(i) + ")</td></tr>");

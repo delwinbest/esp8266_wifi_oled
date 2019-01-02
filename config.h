@@ -1,4 +1,5 @@
 #define OTA
+//#define OTA_DEBUG
 //#define SERIALDEBUG
 
 // Hostname
