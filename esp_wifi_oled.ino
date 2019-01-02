@@ -94,14 +94,9 @@ void setup() {
   delay(500);
   WiFi.mode(WIFI_AP_STA);
   delay(500);
-  loadCredentials(); // Load WLAN credentials from network
-  setupAP();
-  if (strlen(ssid) > 0) {
-    connect = true; 
-  } else {
-    connect = false;
-    setupCore();
-  }
+
+  setupCore();
+
   digitalWrite(pin_LED, HIGH);   // toggle LED
 
 
@@ -115,47 +110,47 @@ void loop() {
   //display.clear();
   //display.drawString(0, 50, timeClient.getFormattedTime());
   //display.display();
-  int s = WiFi.status();
-  if (s == WL_IDLE_STATUS && millis() > (lastConnectTry + 360000) ) {
+  //int s = WiFi.status();
+  //if (s == WL_IDLE_STATUS && millis() > (lastConnectTry + 360000) ) {
     /* If WLAN disconnected and idle try to connect */
     /* Don't set retry time too low as retry interfere the softAP operation */
-    connect = true;
-  }
-  if (connect) {
-    display.println ( "Connect requested" );
-    display.clear();
-    display.drawLogBuffer(0, 0);
-    display.display();
-    connect = false;
-    connectWifi();
-    lastConnectTry = millis();
-  }
-  {
-    if (status != s) { // WLAN status change
+  //  connect = true;
+  //}
+  //if (connect) {
+  //  display.println ( "Connect requested" );
+  //  display.clear();
+  //  display.drawLogBuffer(0, 0);
+  //  display.display();
+  //  connect = false;
+  //  connectWifi();
+  //  lastConnectTry = millis();
+  // }
+  //{
+  //  if (status != s) { // WLAN status change
       //display.print ( "Status: " );
       //display.println ( s );
       //display.clear();
       //display.drawLogBuffer(0, 0);
       //display.display();
-      status = s;
-      if (s == WL_CONNECTED) {
+  //    status = s;
+  //    if (s == WL_CONNECTED) {
         /* Just connected to WLAN */
         //display.println ( "" );
-        display.print ( "Connected to " );
-        display.println ( ssid );
-        display.print ( "IP address:" );
-        display.println ( WiFi.localIP() );
-        display.clear();
-        display.drawLogBuffer(0, 0);
-        display.display();
-      } else if (s == WL_NO_SSID_AVAIL) {
+  //      display.print ( "Connected to " );
+  //      display.println ( ssid );
+  //      display.print ( "IP address:" );
+  //      display.println ( WiFi.localIP() );
+  //      display.clear();
+  //      display.drawLogBuffer(0, 0);
+  //      display.display();
+  //    } else if (s == WL_NO_SSID_AVAIL) {
         //WiFi.softAPdisconnect();
         //WiFi.disconnect(true);
         //delay(500);
-      }
-      setupCore();
-    }
-  }
+  //    }
+   //   setupCore();
+  //  }
+  //}
   // Do work:
   //DNS
   dnsServer.processNextRequest();
@@ -169,7 +164,16 @@ void loop() {
 
 
 void setupCore(){
+  
+  loadCredentials(); // Load WLAN credentials from network
+
+  if (strlen(ssid) > 0) {
+    connectWifi(); 
+  } 
+  setupAP();
+
   // Setup MDNS responder
+  
   if (!MDNS.begin(myHostname)) {
     display.println("Error setting up MDNS responder!");
     display.clear();
@@ -200,9 +204,7 @@ String getVoltage() {
 }
 
 void connectWifi() {
-  display.println("Connecting as wifi client...");
-  WiFi.disconnect();
-  delay(100);
+  display.println("Connecting wifi client...");
   WiFi.begin ( ssid, password );
   display.clear();
   display.drawLogBuffer(0, 0);
@@ -213,13 +215,17 @@ void connectWifi() {
   display.clear();
   display.drawLogBuffer(0, 0);
   display.display();
-}
 
-void setupAP() {
-  display.println("Configuring access point");
+  display.print ( "Connected to " );
+  display.println ( ssid );
+  display.print ( "IP address:" );
+  display.println ( WiFi.localIP() );
   display.clear();
   display.drawLogBuffer(0, 0);
   display.display();
+}
+
+void setupAP() {
   digitalWrite(pin_LED, LOW);   // toggle LED
 
   /* You can remove the password parameter if you want the AP to be open. */
@@ -227,16 +233,13 @@ void setupAP() {
   WiFi.softAP(softAP_ssid, softAP_password);
   delay(500); // Without delay I've seen the IP address blank
   
-  display.print("AP IP address:");
-  display.clear();
-  display.drawLogBuffer(0, 0);
-  display.display();
+  display.print("AP IP:");
   display.println(WiFi.softAPIP());
   display.clear();
   display.drawLogBuffer(0, 0);
   display.display();
   
-  display.print("Wifi AP Started:");
+  display.print("AP ssid:");
   display.println(softAP_ssid);
   display.clear();
   display.drawLogBuffer(0, 0);
@@ -248,6 +251,7 @@ void startHTTP() {
   /* Setup web pages: root, wifi config pages, SO captive portal detectors and not found. */
   server.on("/", handleRoot);
   server.on("/wifi", handleWifi);
+  server.on("/reboot", handleReboot);
   server.on("/wifisave", handleWifiSave);
   server.on("/generate_204", handleRoot);  //Android captive portal. Maybe not needed. Might be handled by notFound handler.
   server.on("/fwlink", handleRoot);  //Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.

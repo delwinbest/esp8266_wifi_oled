@@ -19,6 +19,7 @@ void handleRoot() {
   }
   server.sendContent(
     "<p>You may want to <a href='/wifi'>config the wifi connection</a>.</p>"
+    "<p><a href='/reboot'>Reboot</a></p>"
     "</body></html>"
   );
   server.sendContent("");
@@ -88,6 +89,7 @@ void handleWifi() {
     "<input type='text' placeholder='network' name='n'/>"
     "<br /><input type='password' placeholder='password' name='p'/>"
     "<br /><input type='submit' value='Connect/Disconnect'/></form>"
+    "<p><a href='/reboot'>Reboot</a></p>"
     "<p>You may want to <a href='/'>return to the home page</a>.</p>"
     "</body></html>"
   );
@@ -110,7 +112,13 @@ void handleWifiSave() {
   server.send(302, "text/plain", "");    // Empty content inhibits Content-length header so we have to close the socket ourselves.
   server.client().stop(); // Stop is needed because we sent no content length
   saveCredentials();
-  connect = strlen(ssid) > 0; // Request WLAN connect with new credentials if there is a SSID
+  //connect = strlen(ssid) > 0; // Request WLAN connect with new credentials if there is a SSID
+  ESP.restart();
+}
+
+/** Handle the WLAN save form and redirect to WLAN config page again */
+void handleReboot() {
+  ESP.restart();
 }
 
 void handleNotFound() {
