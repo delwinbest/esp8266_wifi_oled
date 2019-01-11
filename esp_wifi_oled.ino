@@ -8,7 +8,6 @@
 #include <DNSServer.h>
 #include <EEPROM.h>
 // OTA Includes
-
 #include <ArduinoOTA.h>
 #include "spi_flash.h"
 
@@ -94,9 +93,7 @@ void setup() {
   delay(500);
   WiFi.mode(WIFI_AP_STA);
   delay(500);
-
   setupCore();
-
   digitalWrite(pin_LED, HIGH);   // toggle LED
 
 
@@ -164,7 +161,6 @@ void loop() {
 
 
 void setupCore(){
-  
   loadCredentials(); // Load WLAN credentials from network
 
   if (strlen(ssid) > 0) {
@@ -172,26 +168,29 @@ void setupCore(){
   } 
   setupAP();
 
+  display.print("Start:");
+  display.clear();
+  display.drawLogBuffer(0, 0);
+  display.display(); 
   // Setup MDNS responder
   
-  if (!MDNS.begin(myHostname)) {
-    display.println("Error setting up MDNS responder!");
+  if (MDNS.begin(myHostname)) {
+    display.print("DNS,");
     display.clear();
     display.drawLogBuffer(0, 0);
     display.display();
-  } else {
-    //display.println("mDNS responder started");
-    //display.clear();
-    //display.drawLogBuffer(0, 0);
-    //display.display();          
-    // Add service to MDNS-SD
-      /* Setup the DNS server redirecting all the domains to the apIP */  
+    /* Setup the DNS server redirecting all the domains to the apIP */  
     dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
     dnsServer.start(DNS_PORT, "*", apIP);
     MDNS.addService("http", "tcp", 80);
     startHTTP();
     configureOTA();
   }
+  
+  display.println(":Done");
+  display.clear();
+  display.drawLogBuffer(0, 0);
+  display.display(); 
 }
 
 String getVoltage() {
@@ -204,25 +203,42 @@ String getVoltage() {
 }
 
 void connectWifi() {
-  display.println("Connecting wifi client...");
+  /*
+  typedef enum {
+    WL_NO_SHIELD        = 255,   // for compatibility with WiFi Shield library
+    WL_IDLE_STATUS      = 0,
+    WL_NO_SSID_AVAIL    = 1,
+    WL_SCAN_COMPLETED   = 2,
+    WL_CONNECTED        = 3,
+    WL_CONNECT_FAILED   = 4,
+    WL_CONNECTION_LOST  = 5,
+    WL_DISCONNECTED     = 6
+  } wl_status_t;
+  */
+  
+  display.print("Connecting to ");
+  display.println ( ssid );
   WiFi.begin ( ssid, password );
   display.clear();
   display.drawLogBuffer(0, 0);
   display.display();
   int connRes = WiFi.waitForConnectResult();
-  display.print ( "connRes: " );
-  display.println ( connRes );
-  display.clear();
-  display.drawLogBuffer(0, 0);
-  display.display();
-
-  display.print ( "Connected to " );
-  display.println ( ssid );
-  display.print ( "IP address:" );
-  display.println ( WiFi.localIP() );
-  display.clear();
-  display.drawLogBuffer(0, 0);
-  display.display();
+  if ( connRes == WL_CONNECTED ) {
+    display.print ( "Connected to " );
+    display.println ( ssid );
+    display.print ( "IP address:" );
+    display.println ( WiFi.localIP() );
+    display.clear();
+    display.drawLogBuffer(0, 0);
+    display.display();
+  } else {
+    display.print ( "Wifi Connect Failed: " );
+    display.println ( connRes );
+    display.clear();
+    display.drawLogBuffer(0, 0);
+    display.display();
+  }
+  
 }
 
 void setupAP() {
@@ -257,7 +273,7 @@ void startHTTP() {
   server.on("/fwlink", handleRoot);  //Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
   server.onNotFound ( handleNotFound );
   server.begin(); // Web server start
-  display.println("HTTP server started");
+  display.print("HTTP,");
 }
 
 void configureOTA(){
@@ -297,7 +313,7 @@ void configureOTA(){
     display.drawString(display.getWidth()/2, display.getHeight()/2, "Restart");
     display.display();
   });
-  display.println("OTA Started");
+  display.print("OTA,");
   display.clear();
   display.drawLogBuffer(0, 0);
   display.display(); 
